@@ -33,37 +33,50 @@ unsigned get32(const volatile void *addr);
 void nop(void);
 
 // see broadcomm documents for magic addresses.
-#define GPIO_BASE 0x20200000
+#define GPIO_BASE 0x3F200000
 volatile unsigned *gpio_fsel0 = (void*)(GPIO_BASE + 0x00);
 volatile unsigned *gpio_set0  = (void*)(GPIO_BASE + 0x1C);
 volatile unsigned *gpio_clr0  = (void*)(GPIO_BASE + 0x28);
 
 // Part 1 implement gpio_set_on, gpio_set_off, gpio_set_output
 
+void gpio_set_function(unsigned pin, gpio_func_t function) {
+    unsigned pin3 = pin * 3;
+    unsigned offset = pin3 / 30;
+    unsigned shift = pin3 % 30;
+
+    volatile unsigned *fsel_addr = gpio_fsel0 + offset;
+    unsigned fsel_val = get32(fsel_addr); // Get current FSEL.
+    fsel_val &= ~(0b111 << shift); // Mask out the bits for this pin.
+    fsel_val |= function << shift;
+    put32(fsel_addr, fsel_val);
+}
+
 // set <pin> to be an output pin.  note: fsel0, fsel1, fsel2 are contiguous in memory,
 // so you can use array calculations!
 void gpio_set_output(unsigned pin) {
-    // implement this
-    // use gpio_fsel0
+    gpio_set_function(pin, GPIO_FUNC_OUTPUT);
 }
 
 // set GPIO <pin> on.
 void gpio_set_on(unsigned pin) {
-    // implement this
-    // use gpio_set0
+    unsigned offset = pin / 32;
+    unsigned shift = pin % 32;
+    put32(gpio_set0 + offset, 1 << shift);
 }
 
 // set GPIO <pin> off
 void gpio_set_off(unsigned pin) {
-    // implement this
-    // use gpio_clr0
+    unsigned offset = pin / 32;
+    unsigned shift = pin % 32;
+    put32(gpio_clr0 + offset, 1 << shift);
 }
 
 // Part 2: implement gpio_set_input and gpio_read
 
 // set <pin> to input.
 void gpio_set_input(unsigned pin) {
-    // implement.
+    gpio_set_function(pin, GPIO_FUNC_INPUT);
 }
 
 // return the value of <pin>

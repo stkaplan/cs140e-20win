@@ -1,3 +1,9 @@
 *~
 *.bak
 # .gitignore
+
+*.bin
+*.d
+*.elf
+*.list
+*.o
