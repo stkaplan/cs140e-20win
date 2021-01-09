@@ -26,11 +26,7 @@ static int filter(const struct dirent *d) {
 // panic's if 0 or more than 1.
 //
 char *find_ttyusb(void) {
-    char *p;
-
-    // use <alphasort> in <scandir>
-    // return a malloc'd name so doesn't corrupt.
-    unimplemented();
-
-    return p;
+    // WSL uses /dev/ttyS prefix, but has a ton of extraneous entries so we
+    // can't search with scandir(). I'm just hardcoding the one I need.
+    return "/dev/ttyS7";
 }
