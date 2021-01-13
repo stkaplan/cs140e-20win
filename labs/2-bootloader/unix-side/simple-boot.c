@@ -82,6 +82,12 @@ void simple_boot(int fd, const uint8_t *buf, unsigned n) {
     while((op = get_op(fd)) != GET_PROG_INFO)
         output("expected initial GET_PROG_INFO, got <%x>: discarding.\n", op);
 
+    const char *s = "hello world";
+    for (int i = 0; i < strlen(s); i++) {
+        output("put byte %d\n", i);
+        put_byte(fd, s[i]);
+    }
+    get_op(fd);
     // 1. reply to the GET_PROG_INFO
     unimplemented();
 

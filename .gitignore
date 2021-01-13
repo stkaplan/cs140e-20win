@@ -8,3 +8,5 @@
 *.list
 *.o
 *.a
+*.img
+compile_commands.json

@@ -100,6 +100,7 @@ void notmain(void) {
 
     // 1. keep sending GET_PROG_INFO until there is data.
     wait_for_data();
+    putk("hello from the pi");
 
     /****************************************************************
      * Add your code below: 2,3,4,5,6
