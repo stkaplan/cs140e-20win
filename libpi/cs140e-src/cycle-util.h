@@ -38,7 +38,7 @@ write_cyc_until(unsigned pin, unsigned v, unsigned start, unsigned ncycles) {
     // trying to eek out what we can in terms of speed so that we
     // do not get 
     static inline unsigned GPIO_READ_RAW(unsigned pin) {
-        unsigned GPIO_BASE  = 0x20200000UL;
+        unsigned GPIO_BASE  = 0x3F200000UL;
     
         volatile unsigned *gpio_lev0  = (void*)(GPIO_BASE + 0x34);
         unsigned off = (pin%32);

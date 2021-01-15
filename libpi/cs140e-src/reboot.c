@@ -39,8 +39,8 @@ void rpi_reboot(void) {
     // gives uart time to flush: should just call flush directly.
     delay_ms(30);
 
-    const int PM_RSTC = 0x2010001c;
-    const int PM_WDOG = 0x20100024;
+    const int PM_RSTC = 0x3f10001c;
+    const int PM_WDOG = 0x3f100024;
     const int PM_PASSWORD = 0x5a000000;
     const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
 

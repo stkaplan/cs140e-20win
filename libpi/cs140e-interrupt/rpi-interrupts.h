@@ -16,9 +16,9 @@
 #define RPI_BASIC_ACCESS_ERROR_1_IRQ    (1 << 6)
 #define RPI_BASIC_ACCESS_ERROR_0_IRQ    (1 << 7)
 
-// bcm2835, p112   [starts at 0x2000b200]
+// bcm2835, p112   [starts at 0x3f00b200]
 enum { 
-    IRQ_Base            = 0x2000b200,
+    IRQ_Base            = 0x3f00b200,
     IRQ_basic_pending   = IRQ_Base+0,       // 0x200
     IRQ_pending_1       = IRQ_Base+4,       // 0x204
     IRQ_pending_2       = IRQ_Base+8,       // 0x208

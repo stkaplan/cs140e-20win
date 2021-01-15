@@ -15,7 +15,7 @@ void delay_cycles(unsigned ticks) {
 
 // no dev barrier.
 unsigned timer_get_usec_raw(void) {
-    return GET32(0x20003004);
+    return GET32(0x3F003004);
 }
 
 // in usec
