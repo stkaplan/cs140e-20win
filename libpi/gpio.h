@@ -1,6 +1,8 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#include "rpi.h"
+
 // List of functions for GPIO pins.
 // The ordering of ALT values is weird, but correct to the spec.
 typedef enum {

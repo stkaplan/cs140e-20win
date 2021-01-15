@@ -39,9 +39,13 @@ volatile unsigned *gpio_set0  = (void*)(GPIO_BASE + 0x1C);
 volatile unsigned *gpio_clr0  = (void*)(GPIO_BASE + 0x28);
 volatile unsigned *gpio_lev0  = (void*)(GPIO_BASE + 0x34);
 
+const unsigned MAX_PIN = 31;
+
 // Part 1 implement gpio_set_on, gpio_set_off, gpio_set_output
 
 void gpio_set_function(unsigned pin, gpio_func_t function) {
+    if (pin > MAX_PIN) return; // TODO: Raise an error here.
+
     unsigned pin3 = pin * 3;
     unsigned offset = pin3 / 30;
     unsigned shift = pin3 % 30;
@@ -61,6 +65,8 @@ void gpio_set_output(unsigned pin) {
 
 // set GPIO <pin> on.
 void gpio_set_on(unsigned pin) {
+    if (pin > MAX_PIN) return; // TODO: Raise an error here.
+
     unsigned offset = pin / 32;
     unsigned shift = pin % 32;
     put32(gpio_set0 + offset, 1 << shift);
@@ -68,6 +74,8 @@ void gpio_set_on(unsigned pin) {
 
 // set GPIO <pin> off
 void gpio_set_off(unsigned pin) {
+    if (pin > MAX_PIN) return; // TODO: Raise an error here.
+
     unsigned offset = pin / 32;
     unsigned shift = pin % 32;
     put32(gpio_clr0 + offset, 1 << shift);
@@ -82,6 +90,8 @@ void gpio_set_input(unsigned pin) {
 
 // return the value of <pin>
 int gpio_read(unsigned pin) {
+    if (pin > MAX_PIN) return 0; // TODO: Raise an error here.
+
     unsigned offset = pin / 32;
     unsigned shift = pin % 32;
     unsigned gplev = get32(gpio_lev0 + offset);
