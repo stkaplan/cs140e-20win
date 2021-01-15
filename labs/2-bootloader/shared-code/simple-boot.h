@@ -17,6 +17,7 @@ enum {
     BOOT_ERROR      = 0xBBBBCCCC,       // pi sends on failure.
 
     PRINT_STRING    = 0xDDDDEEEE,       // pi sends to print a string.
+    PRINT_VALUE     = 0xDDDDEEEF,       // pi sends a single uint32 to print.
 
 
     // error codes from the pi to unix

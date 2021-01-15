@@ -45,16 +45,22 @@ static void ck_eq32(int fd, const char *msg, unsigned exp, unsigned got) {
 // PRINT_STRING and emits if so, otherwise returns the value.
 uint32_t get_op(int fd) {
     uint32_t op = get_uint32(fd);
-    if(op != PRINT_STRING)
-        return op;
 
-    unsigned nbytes = get_uint32(fd);
-    demand(nbytes < 512, pi sent a suspiciously long string);
-    output("pi sent print: <");
-    for(int i = 0; i < nbytes; i++)
-        output("%c", get_byte(fd));
-    output(">\n");
-    return get_op(fd);
+    if (op == PRINT_STRING) {
+        unsigned nbytes = get_uint32(fd);
+        demand(nbytes < 512, pi sent a suspiciously long string);
+        output("pi sent print: <");
+        for(int i = 0; i < nbytes; i++)
+            output("%c", get_byte(fd));
+        output(">\n");
+        return get_op(fd);
+    } else if (op == PRINT_VALUE) {
+        uint32_t val = get_uint32(fd);
+        output("pi sent value: %u / 0x%x\n", val, val);
+        return get_op(fd);
+    } else {
+        return op;
+    }
 }
 
 /*********************************************************************************
@@ -81,24 +87,36 @@ void simple_boot(int fd, const uint8_t *buf, unsigned n) {
     // nonsense.  could add a crc.
     while((op = get_op(fd)) != GET_PROG_INFO)
         output("expected initial GET_PROG_INFO, got <%x>: discarding.\n", op);
+    output("got initial GET_PROG_INFO\n");
 
-    const char *s = "hello world";
-    for (int i = 0; i < strlen(s); i++) {
-        output("put byte %d\n", i);
-        put_byte(fd, s[i]);
-    }
-    get_op(fd);
     // 1. reply to the GET_PROG_INFO
-    unimplemented();
+    put_uint32(fd, PUT_PROG_INFO);
+    put_uint32(fd, ARMBASE);
+    put_uint32(fd, n);
+    uint32_t crc = crc32(buf, n);
+    put_uint32(fd, crc);
+    output("sent CRC of 0x%x\n", crc);
 
     // 2. drain any extra GET_PROG_INFOS
-    unimplemented();
+    do {
+        // Do nothing, we're just draining the input queue.
+    } while ((op = get_op(fd)) == GET_PROG_INFO);
 
     // 3. check that we received a GET_CODE
-    unimplemented();
+    if (op != GET_CODE) {
+        die("fatal error: expected GET_CODE, got <%x>\n", op);
+    }
+    if ((op = get_op(fd)) != crc) {
+        die("fatal error: crc mismatch: expected 0x%x, got 0x%x\n", crc, op);
+    }
 
     // 4. handle it: send a PUT_CODE massage.
-    unimplemented();
+    output("begin sending code\n");
+    put_uint32(fd, PUT_CODE);
+    for (int i = 0; i < n; i++) {
+        put_byte(fd, buf[i]);
+    }
+    output("finished sending code\n");
 
     // 5. Wait for success
     ck_eq32(fd, "BOOT_SUCCESS mismatch", BOOT_SUCCESS, get_op(fd));

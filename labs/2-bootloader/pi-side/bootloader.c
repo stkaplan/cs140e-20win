@@ -72,6 +72,11 @@ void putk(const char *msg) {
         put_byte(msg[n]);
 }
 
+void putk_value(unsigned val) {
+    put_uint(PRINT_VALUE);
+    put_uint(val);
+}
+
 // send a <GET_PROG_INFO> message every 300ms.
 // 
 // NOTE: look at the idiom for comparing the current usec count to 
@@ -96,11 +101,12 @@ void wait_for_data(void) {
 
 // Simple bootloader: put all of your code here: implement steps 2,3,4,5,6
 void notmain(void) {
+    unsigned op, nbytes, expected_crc;
+
     uart_init();
 
     // 1. keep sending GET_PROG_INFO until there is data.
     wait_for_data();
-    putk("hello from the pi");
 
     /****************************************************************
      * Add your code below: 2,3,4,5,6
@@ -109,22 +115,53 @@ void notmain(void) {
 
     // 2. expect: [PUT_PROG_INFO, addr, nbytes, cksum] 
     //    we echo cksum back in step 4 to help debugging.
-
+    if ((op = get_uint()) != PUT_PROG_INFO) {
+        putk("FATAL ERROR: PUT_PROG_INFO mismatch");
+        putk_value(op);
+        reboot();
+    }
+    if ((op = get_uint()) != ARMBASE) {
+        putk("FATAL ERROR: ARMBASE mismatch");
+        putk_value(op);
+        reboot();
+    }
+    nbytes = get_uint();
+    expected_crc = get_uint();
 
     // 3. If the binary will collide with us, abort. 
     //    you can assume that code must be below where the booloader code
     //    gap starts.
-
+    if (ARMBASE + nbytes > (unsigned) BRANCHTO) {
+        putk("FATAL_ERROR: code too large");
+        put_uint(BAD_CODE_ADDR);
+        reboot();
+    }
 
     // 4. send [GET_CODE, cksum] back.
-
+    put_uint(GET_CODE);
+    put_uint(expected_crc);
 
     // 5. expect: [PUT_CODE, <code>]
     //  read each sent byte and write it starting at 
     //  ARMBASE using PUT8
+    if ((op = get_uint()) != PUT_CODE) {
+        putk("FATAL ERROR: PUT_CODE mismatch");
+        putk_value(op);
+        reboot();
+    }
+    for (int i = 0; i < nbytes; i++) {
+        PUT8(ARMBASE+i, get_byte());
+    }
 
     // 6. verify the cksum of the copied code.
-
+    unsigned actual_crc = crc32((void *) ARMBASE, nbytes);
+    if (actual_crc != expected_crc) {
+        putk("FATAL ERROR: incorrect crc");
+        putk_value(expected_crc);
+        putk_value(actual_crc);
+        put_uint(BAD_CODE_CKSUM);
+        reboot();
+    }
 
     /****************************************************************
      * add your code above: don't modify below unless you want to 
