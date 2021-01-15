@@ -105,6 +105,13 @@ void notmain(void) {
 
     uart_init();
 
+    // The Pi has a single byte in the RX queue when first booting. No idea
+    // where that is coming from; just ignore it.
+    // NOTE: It seems like uart_rx_has_data() doesn't work when called
+    // immediately after uart_init(). No idea why. It works if I sleep 300 ms
+    // first, but that's fragile. Instead, unconditionally pull 1 byte from RX.
+    get_byte();
+
     // 1. keep sending GET_PROG_INFO until there is data.
     wait_for_data();
 
