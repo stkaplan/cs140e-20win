@@ -12,6 +12,4 @@ EXTRA_OBJS= cs140e-objs/uart.o \
             cs140e-objs/kmalloc.o \
             cs140e-objs/sw-uart.o \
             cs140e-objs/uart-int.o \
-            cs140e-objs/interrupts-asm.o \
-            cs140e-objs/thread-asm.o      \
-            cs140e-objs/rpi-thread.o   
+            cs140e-objs/interrupts-asm.o
