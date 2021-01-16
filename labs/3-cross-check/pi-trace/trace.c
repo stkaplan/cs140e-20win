@@ -40,12 +40,59 @@ void __real_put32(volatile void *addr, unsigned v);
 static int tracing_p = 0; // whether tracing is currently enabled
 static int in_trace = 0; // whether we're currently running a trace function, so we can prevent recursion
 
-void trace_start(int capture_p) {
-    if(capture_p)
-        unimplemented();
+typedef enum {
+    TRACE_OP_GET32,
+    TRACE_OP_PUT32,
+} trace_op_t;
+
+typedef struct {
+    unsigned addr;
+    unsigned val;
+    trace_op_t op;
+} trace_record_t;
+
+enum { NUM_LOG_RECORDS = 1024 };
+trace_record_t trace_capture[NUM_LOG_RECORDS];
+size_t next_trace_slot = 0;
+int capture_p;
+
+void capture_trace(unsigned addr, unsigned val, trace_op_t op) {
+    demand(next_trace_slot < NUM_LOG_RECORDS, "trace capture full");
+    trace_record_t *slot = &trace_capture[next_trace_slot];
+    slot->addr = addr;
+    slot->val = val;
+    slot->op = op;
+    next_trace_slot++;
+}
+
+void printk_get32(unsigned addr, unsigned v, int capture) {
+    if (capture) {
+        capture_trace(addr, v, TRACE_OP_GET32);
+    } else {
+        printk("\tTRACE:GET32(0x%x)=0x%x\n", addr, v);
+    }
+}
+
+void printk_put32(unsigned addr, unsigned v, int capture) {
+    if (capture) {
+        capture_trace(addr, v, TRACE_OP_PUT32);
+    } else {
+        printk("\tTRACE:PUT32(0x%x)=0x%x\n", addr, v);
+    }
+}
+
+void printk_trace_record(trace_record_t *record) {
+    switch (record->op) {
+        case TRACE_OP_GET32: printk_get32(record->addr, record->val, 0); break;
+        case TRACE_OP_PUT32: printk_put32(record->addr, record->val, 0); break;
+    }
+}
+
+void trace_start(int capture) {
     demand(!tracing_p, "trace already running!");
     demand(!in_trace, "invalid in_trace");
     tracing_p = 1; 
+    capture_p = capture;
 }
 
 // the linker will change all calls to GET32 to call __wrap_GET32
@@ -61,7 +108,7 @@ unsigned __wrap_GET32(unsigned addr) {
         in_trace = 1;
         // match it up with your unix print so you can compare.
         // we have to add a 0x
-        printk("\tTRACE:GET32(0x%x)=0x%x\n", addr, v);
+        printk_get32(addr, v, capture_p);
         in_trace = 0;
     }
     return v;
@@ -75,7 +122,7 @@ void __wrap_PUT32(unsigned addr, unsigned v) {
     __real_PUT32(addr, v);
     if (!in_trace && tracing_p) {
         in_trace = 1;
-        printk("\tTRACE:PUT32(0x%x)=0x%x\n", addr, v);
+        printk_put32(addr, v, capture_p);
         in_trace = 0;
     }
 }
@@ -90,5 +137,11 @@ void trace_stop(void) {
 }
 
 void trace_dump(int reset_p) { 
-    unimplemented();
+    for (int i = 0; i < next_trace_slot; i++) {
+        printk_trace_record(&trace_capture[i]);
+    }
+
+    if (reset_p) {
+        next_trace_slot = 0;
+    }
 }
