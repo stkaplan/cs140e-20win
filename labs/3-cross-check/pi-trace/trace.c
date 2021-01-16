@@ -30,9 +30,15 @@
 // gross that these are not auto-consistent with GET32 in rpi.h
 unsigned __wrap_GET32(unsigned addr);
 unsigned __real_GET32(unsigned addr);
+unsigned __wrap_get32(const volatile void *addr);
+unsigned __real_get32(const volatile void *addr);
+void __wrap_PUT32(unsigned addr, unsigned v);
+void __real_PUT32(unsigned addr, unsigned v);
+void __wrap_put32(volatile void *addr, unsigned v);
+void __real_put32(volatile void *addr, unsigned v);
 
-static int tracing_p = 0;
-static int in_trace = 0;
+static int tracing_p = 0; // whether tracing is currently enabled
+static int in_trace = 0; // whether we're currently running a trace function, so we can prevent recursion
 
 void trace_start(int capture_p) {
     if(capture_p)
@@ -61,6 +67,22 @@ unsigned __wrap_GET32(unsigned addr) {
     return v;
 }
 
+unsigned __wrap_get32(const volatile void *addr) {
+    return __wrap_GET32((unsigned) addr);
+}
+
+void __wrap_PUT32(unsigned addr, unsigned v) {
+    __real_PUT32(addr, v);
+    if (!in_trace && tracing_p) {
+        in_trace = 1;
+        printk("\tTRACE:PUT32(0x%x)=0x%x\n", addr, v);
+        in_trace = 0;
+    }
+}
+
+void __wrap_put32(volatile void *addr, unsigned v) {
+    __wrap_PUT32((unsigned) addr, v);
+}
 
 void trace_stop(void) {
     demand(tracing_p, "trace already stopped!\n");
