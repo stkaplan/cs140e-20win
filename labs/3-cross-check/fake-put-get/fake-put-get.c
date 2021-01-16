@@ -53,6 +53,10 @@ typedef struct {
     mem_t v;
 } log_ent_t;
 
+enum { NUM_MEM_SLOTS = 1024 };
+mem_t mem[NUM_MEM_SLOTS];
+size_t next_slot = 0;
+
 static mem_t mk_mem(const volatile void *addr, unsigned val) {
     return (mem_t) { .addr = addr, .val = val };
 }
@@ -67,10 +71,33 @@ static void print_read(mem_t *m) {
 }
 
 unsigned get32(const volatile void *addr) {
-    unimplemented();
+    for (size_t i = 0; i < next_slot; i++) {
+        if (mem[i].addr == addr) {
+            print_read(&mem[i]);
+            return mem[i].val;
+        }
+    }
+
+    demand(next_slot < NUM_MEM_SLOTS, "out of memory slots");
+    unsigned val = fake_random();
+    mem[next_slot] = mk_mem(addr, val);
+    print_read(&mem[next_slot]);
+    next_slot++;
+    return val;
 }
 
 void put32(volatile void *addr, unsigned val) {
-    unimplemented();
+    for (size_t i = 0; i < next_slot; i++) {
+        if (mem[i].addr == addr) {
+            mem[i].val = val;
+            print_write(&mem[i]);
+            return;
+        }
+    }
+
+    demand(next_slot < NUM_MEM_SLOTS, "out of memory slots");
+    mem[next_slot] = mk_mem(addr, val);
+    print_write(&mem[next_slot]);
+    next_slot++;
 }
 

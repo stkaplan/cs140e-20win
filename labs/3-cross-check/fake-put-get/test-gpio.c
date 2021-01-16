@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
             test_gpio_set_off(N);
             break;
     case 4: 
-            //test_gpio_set_function(N);
+            test_gpio_set_function(N);
             break;
 
     default: 

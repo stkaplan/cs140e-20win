@@ -40,11 +40,13 @@ volatile unsigned *gpio_clr0  = (void*)(GPIO_BASE + 0x28);
 volatile unsigned *gpio_lev0  = (void*)(GPIO_BASE + 0x34);
 
 const unsigned MAX_PIN = 31;
+const unsigned MAX_FUNCTION = 7;
 
 // Part 1 implement gpio_set_on, gpio_set_off, gpio_set_output
 
 void gpio_set_function(unsigned pin, gpio_func_t function) {
     if (pin > MAX_PIN) return; // TODO: Raise an error here.
+    if (function > MAX_FUNCTION) return;
 
     unsigned pin3 = pin * 3;
     unsigned offset = pin3 / 30;
